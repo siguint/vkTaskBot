@@ -18,14 +18,13 @@ type RedisClient struct{ *redis.Client }
 var once sync.Once
 var redisClient *RedisClient
 
-
 type Record struct {
-	ID int64
+	ID      int64
 	Service string
-	Data Data
+	Data    Data
 }
 type Data struct {
-	Login   string `json:"login"`
+	Login    string `json:"login"`
 	Password string `json:"password"`
 }
 

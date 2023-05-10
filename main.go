@@ -14,18 +14,18 @@ import (
 
 func main() {
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_APITOKEN"))
-    if err != nil {
-        log.Panic(err)
-    }
+	if err != nil {
+		log.Panic(err)
+	}
 	ctx := context.Background()
-    bot.Debug = true
+	bot.Debug = true
 
-    log.Printf("Authorized on account %s", bot.Self.UserName)
+	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-    u := tgbotapi.NewUpdate(0)
-    u.Timeout = 60
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
 
-    updates := bot.GetUpdatesChan(u)
+	updates := bot.GetUpdatesChan(u)
 
 	ticker := time.NewTicker(15 * time.Second)
 	mu := sync.Mutex{}
@@ -35,7 +35,7 @@ func main() {
 	go func() {
 		for {
 			select {
-			case <- ticker.C:
+			case <-ticker.C:
 				mu.Lock()
 				for _, x := range messagesToDelete {
 					_, err := bot.Request(x)
@@ -46,22 +46,22 @@ func main() {
 				}
 				messagesToDelete = nil
 				mu.Unlock()
-			case <- quit:
+			case <-quit:
 				ticker.Stop()
 				return
 			}
 		}
 	}()
-    for update := range updates {
-        if update.Message == nil { // ignore any non-Message updates
-            continue
-        }
+	for update := range updates {
+		if update.Message == nil { // ignore any non-Message updates
+			continue
+		}
 
-        if !update.Message.IsCommand() { // ignore any non-command Messages
-            continue
-        }
+		if !update.Message.IsCommand() { // ignore any non-command Messages
+			continue
+		}
 
-        msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 		id := update.SentFrom().ID
 		mu.Lock()
 		messagesToDelete = append(messagesToDelete, tgbotapi.DeleteMessageConfig{
@@ -70,18 +70,18 @@ func main() {
 		})
 		mu.Unlock()
 		log.Print("Update from: ", id)
-        switch update.Message.Command() {
-        case "set":
+		switch update.Message.Command() {
+		case "set":
 			words := strings.Fields(update.Message.CommandArguments())
-			if (len(words) < 3) {
-            	msg.Text = "Not enough arguments"
+			if len(words) < 3 {
+				msg.Text = "Not enough arguments"
 			} else {
 				service, login, password := words[0], words[1], words[2]
 				err := SetKey(ctx, Record{
-					ID: id,
+					ID:      id,
 					Service: service,
-					Data: Data {
-						Login: login,
+					Data: Data{
+						Login:    login,
 						Password: password,
 					},
 				})
@@ -93,18 +93,18 @@ func main() {
 				}
 
 			}
-        case "get":
+		case "get":
 			words := strings.Fields(update.Message.CommandArguments())
-			if (len(words) < 1) {
-            	msg.Text = "Not enough arguments"
+			if len(words) < 1 {
+				msg.Text = "Not enough arguments"
 			} else {
 				service := words[0]
-				log.Print("Getting: " , service)
+				log.Print("Getting: ", service)
 				val, err := GetKey(ctx, Record{
-					ID: id,
+					ID:      id,
 					Service: service,
-					Data: Data {
-						Login: "",
+					Data: Data{
+						Login:    "",
 						Password: "",
 					},
 				})
@@ -115,18 +115,18 @@ func main() {
 					msg.Text = val
 				}
 			}
-        case "del":
+		case "del":
 			words := strings.Fields(update.Message.CommandArguments())
-			if (len(words) < 1) {
-            	msg.Text = "Not enough arguments"
+			if len(words) < 1 {
+				msg.Text = "Not enough arguments"
 			} else {
 				service := words[0]
-				log.Print("Deleting" , service)
+				log.Print("Deleting", service)
 				err := DeleteKey(ctx, Record{
-					ID: id,
+					ID:      id,
 					Service: service,
-					Data: Data {
-						Login: "",
+					Data: Data{
+						Login:    "",
 						Password: "",
 					},
 				})
@@ -143,13 +143,13 @@ func main() {
 					/get login - get login and password by service name
 					/del login - delete login and password by service name
 			`
-        default:
-            msg.Text = "I don't know that command"
-        }
+		default:
+			msg.Text = "I don't know that command"
+		}
 
-        if msg, err := bot.Send(msg); err != nil {
-            log.Panic(err)
-        } else {
+		if msg, err := bot.Send(msg); err != nil {
+			log.Panic(err)
+		} else {
 			mu.Lock()
 			messagesToDelete = append(messagesToDelete, tgbotapi.DeleteMessageConfig{
 				ChatID:    msg.Chat.ID,
@@ -157,6 +157,6 @@ func main() {
 			})
 			mu.Unlock()
 		}
-    }
+	}
 	close(quit)
 }
