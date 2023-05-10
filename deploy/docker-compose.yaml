@@ -10,6 +10,7 @@ services:
       context: ../
       dockerfile: ./deploy/Dockerfile
     environment:
+      - TELEGRAM_APITOKEN=${TELEGRAM_APITOKEN}
       - REDIS_DB_URL=redis-db:6379
       - REDIS_DB_PASSWORD=
       - REDIS_DB=0
