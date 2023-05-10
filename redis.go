@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -20,6 +21,7 @@ var redisClient *RedisClient
 
 type Record struct {
 	ID int64
+	Service string
 	Data Data
 }
 type Data struct {
@@ -55,7 +57,11 @@ func init() {
 }
 
 func SetKey(ctx context.Context, r Record) error {
-	err := redisClient.HSet(ctx, strconv.FormatInt(r.ID, 10), r.Data.Login, r.Data.Password).Err()
+	val, err := json.Marshal(r.Data)
+	if err != nil {
+		return err
+	}
+	err = redisClient.HSet(ctx, strconv.FormatInt(r.ID, 10), r.Service, val).Err()
 
 	if err != nil {
 		return err
@@ -65,7 +71,7 @@ func SetKey(ctx context.Context, r Record) error {
 }
 
 func GetKey(ctx context.Context, r Record) (string, error) {
-	val, err := redisClient.HGet(ctx, strconv.FormatInt(r.ID, 10), r.Data.Login).Result()
+	val, err := redisClient.HGet(ctx, strconv.FormatInt(r.ID, 10), r.Service).Result()
 
 	if err != nil {
 		return "", err
@@ -74,7 +80,7 @@ func GetKey(ctx context.Context, r Record) (string, error) {
 }
 
 func DeleteKey(ctx context.Context, r Record) error {
-	_, err := redisClient.HDel(ctx, strconv.FormatInt(r.ID, 10), r.Data.Login).Result()
+	_, err := redisClient.HDel(ctx, strconv.FormatInt(r.ID, 10), r.Service).Result()
 
 	if err != nil {
 		return err
